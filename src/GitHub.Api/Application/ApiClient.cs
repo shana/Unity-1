@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Octokit;
 
@@ -360,5 +361,44 @@ namespace GitHub.Unity
     {
         public KeychainEmptyException()
         { }
+    }
+
+    public class GitHubApi : IGitHubApi
+    {
+        private static ILogging Logger = Logging.GetLogger<GitHubApi>();
+        private IRepository Repository { get; set; }
+
+        private CacheUpdateEvent lastCurrentRemoteChangedEvent;
+        private GitRemote? repositoryCurrentRemote;
+
+        public void Initialize(IRepository repository)
+        {
+            Logger.Trace("Initialize");
+
+            Repository = repository;
+
+            Repository.CurrentRemoteChanged += RepositoryOnCurrentRemoteChanged;
+
+            Repository.CheckCurrentRemoteChangedEvent(lastCurrentRemoteChangedEvent);
+        }
+
+        private void RepositoryOnCurrentRemoteChanged(CacheUpdateEvent cacheUpdateEvent)
+        {
+            Logger.Trace("RepositoryOnCurrentRemoteChanged");
+
+            if (!lastCurrentRemoteChangedEvent.Equals(cacheUpdateEvent))
+            {
+                lastCurrentRemoteChangedEvent = cacheUpdateEvent;
+
+                new ActionTask(CancellationToken.None, () => {
+                    repositoryCurrentRemote = Repository.CurrentRemote;
+                }) { Affinity = TaskAffinity.UI }.Start();
+            }
+        }
+    }
+
+    public interface IGitHubApi
+    {
+        void Initialize(IRepository repository);
     }
 }

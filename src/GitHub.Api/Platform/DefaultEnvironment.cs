@@ -49,6 +49,7 @@ namespace GitHub.Unity
             UnityProjectPath = assetsPath.Parent;
             UnityVersion = unityVersion;
             User = new User(CacheContainer);
+            GitHubApi = new GitHubApi();
         }
 
         public void InitializeRepository(NPath expectedRepositoryPath = null)
@@ -87,6 +88,7 @@ namespace GitHub.Unity
                 Logger.Trace("Determined expectedRepositoryPath:{0}", expectedRepositoryPath);
                 RepositoryPath = expectedRepositoryPath;
                 Repository = new Repository(RepositoryPath, CacheContainer);
+                GitHubApi.Initialize(Repository);
             }
         }
 
@@ -136,6 +138,7 @@ namespace GitHub.Unity
         public ICacheContainer CacheContainer { get; private set; }
         public IRepository Repository { get; set; }
         public IUser User { get; set; }
+        public IGitHubApi GitHubApi { get; set; }
 
         public bool IsWindows { get { return OnWindows; } }
         public bool IsLinux { get { return OnLinux; } }

@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Threading;
+using Rackspace.Threading;
 using UnityEditor;
 using UnityEngine;
 
@@ -401,8 +403,9 @@ namespace GitHub.Unity
 
         private void GoToProfile(object obj)
         {
-            Application.OpenURL(Platform.CredentialManager.CachedCredentials.Host.Combine(Platform.CredentialManager.CachedCredentials.Username));
+
         }
+
         private void SignOut(object obj)
         {
             UriString host;
