@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GitHub.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -382,7 +383,7 @@ namespace GitHub.Unity
 
         private void RepositoryManagerOnCurrentBranchUpdated(ConfigBranch? branch, ConfigRemote? remote)
         {
-            new ActionTask(CancellationToken.None, () => {
+            new ActionTask(TaskManager.Instance.Token, () => {
                 if (!Nullable.Equals(CurrentConfigBranch, branch))
                 {
                     var currentBranch = branch != null ? (GitBranch?)GetLocalGitBranch(branch.Value) : null;
@@ -403,7 +404,7 @@ namespace GitHub.Unity
 
         private void RepositoryManagerOnGitStatusUpdated(GitStatus gitStatus)
         {
-            new ActionTask(CancellationToken.None, () => {
+            new ActionTask(TaskManager.Instance.Token, () => {
                 CurrentChanges = gitStatus.Entries;
                 CurrentAhead = gitStatus.Ahead;
                 CurrentBehind = gitStatus.Behind;
@@ -412,7 +413,7 @@ namespace GitHub.Unity
 
         private void RepositoryManagerOnGitAheadBehindStatusUpdated(GitAheadBehindStatus aheadBehindStatus)
         {
-            new ActionTask(CancellationToken.None, () => {
+            new ActionTask(TaskManager.Instance.Token, () => {
                 CurrentAhead = aheadBehindStatus.Ahead;
                 CurrentBehind = aheadBehindStatus.Behind;
             }) { Affinity = TaskAffinity.UI }.Start();
@@ -420,14 +421,14 @@ namespace GitHub.Unity
 
         private void RepositoryManagerOnGitLogUpdated(List<GitLogEntry> gitLogEntries)
         {
-            new ActionTask(CancellationToken.None, () => {
+            new ActionTask(TaskManager.Instance.Token, () => {
                 CurrentLog = gitLogEntries;
             }) { Affinity = TaskAffinity.UI }.Start();
         }
 
         private void RepositoryManagerOnGitLocksUpdated(List<GitLock> gitLocks)
         {
-            new ActionTask(CancellationToken.None, () => {
+            new ActionTask(TaskManager.Instance.Token, () => {
                     CurrentLocks = gitLocks;
                 })
                 { Affinity = TaskAffinity.UI }.Start();
@@ -436,7 +437,7 @@ namespace GitHub.Unity
         private void RepositoryManagerOnRemoteBranchesUpdated(Dictionary<string, ConfigRemote> remotes,
             Dictionary<string, Dictionary<string, ConfigBranch>> branches)
         {
-            new ActionTask(CancellationToken.None, () => {
+            new ActionTask(TaskManager.Instance.Token, () => {
                 cacheContainer.BranchCache.SetRemotes(remotes, branches);
                 Remotes = ConfigRemotes.Values.Select(GetGitRemote).ToArray();
                 RemoteBranches = RemoteConfigBranches.Values.SelectMany(x => x.Values).Select(GetRemoteGitBranch).ToArray();
@@ -445,7 +446,7 @@ namespace GitHub.Unity
 
         private void RepositoryManagerOnLocalBranchesUpdated(Dictionary<string, ConfigBranch> branches)
         {
-            new ActionTask(CancellationToken.None, () => {
+            new ActionTask(TaskManager.Instance.Token, () => {
                 cacheContainer.BranchCache.SetLocals(branches);
                 UpdateLocalBranches();
             }) { Affinity = TaskAffinity.UI }.Start();
@@ -472,11 +473,11 @@ namespace GitHub.Unity
 
         private GitBranch GetLocalGitBranch(ConfigBranch x)
         {
-            var name = x.Name;
-            var trackingName = x.IsTracking ? x.Remote.Value.Name + "/" + name : "[None]";
-            var isActive = name == CurrentBranchName;
+            var branchName = x.Name;
+            var trackingName = x.IsTracking ? x.Remote.Value.Name + "/" + branchName : "[None]";
+            var isActive = branchName == CurrentBranchName;
 
-            return new GitBranch(name, trackingName, isActive);
+            return new GitBranch(branchName, trackingName, isActive);
         }
 
         private static GitBranch GetRemoteGitBranch(ConfigBranch x)
@@ -625,7 +626,7 @@ namespace GitHub.Unity
             "{0} Owner: {1} Name: {2} CloneUrl: {3} LocalPath: {4} Branch: {5} Remote: {6}", GetHashCode(), Owner, Name,
             CloneUrl, LocalPath, CurrentBranch, CurrentRemote);
 
-        protected static ILogging Logger { get; } = Logging.GetLogger<Repository>();
+        protected static ILogging Logger { get; } = LogHelper.GetLogger<Repository>();
     }
 
     public interface IUser
@@ -649,9 +650,6 @@ namespace GitHub.Unity
         public User(ICacheContainer cacheContainer)
         {
             this.cacheContainer = cacheContainer;
-
-            cacheContainer.GitUserCache.CacheInvalidated += GitUserCacheOnCacheInvalidated;
-            cacheContainer.GitUserCache.CacheUpdated += GitUserCacheOnCacheUpdated;
         }
 
         public void CheckUserChangedEvent(CacheUpdateEvent cacheUpdateEvent)
@@ -677,6 +675,9 @@ namespace GitHub.Unity
             Logger.Trace("Initialize");
 
             gitClient = client;
+
+            cacheContainer.GitUserCache.CacheInvalidated += GitUserCacheOnCacheInvalidated;
+            cacheContainer.GitUserCache.CacheUpdated += GitUserCacheOnCacheUpdated;
             cacheContainer.GitUserCache.ValidateData();
         }
 
@@ -750,7 +751,7 @@ namespace GitHub.Unity
                      }).Start();
         }
         
-        protected static ILogging Logger { get; } = Logging.GetLogger<User>();
+        protected static ILogging Logger { get; } = LogHelper.GetLogger<User>();
     }
 
     [Serializable]
@@ -758,6 +759,48 @@ namespace GitHub.Unity
     {
         [NonSerialized] private DateTimeOffset? updatedTimeValue;
         public string updatedTimeString;
+
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            hash = hash * 23 + updatedTimeValue.GetHashCode();
+            hash = hash * 23 + (updatedTimeString?.GetHashCode() ?? 0);
+            return hash;
+        }
+
+        public override bool Equals(object other)
+        {
+            if (other is CacheUpdateEvent)
+                return Equals((CacheUpdateEvent)other);
+            return false;
+        }
+
+        public bool Equals(CacheUpdateEvent other)
+        {
+            return
+                object.Equals(updatedTimeValue, other.updatedTimeValue) && 
+                String.Equals(updatedTimeString, other.updatedTimeString)
+                ;
+        }
+
+        public static bool operator ==(CacheUpdateEvent lhs, CacheUpdateEvent rhs)
+        {
+            // If both are null, or both are same instance, return true.
+            if (ReferenceEquals(lhs, rhs))
+                return true;
+
+            // If one is null, but not both, return false.
+            if (((object)lhs == null) || ((object)rhs == null))
+                return false;
+
+            // Return true if the fields match:
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(CacheUpdateEvent lhs, CacheUpdateEvent rhs)
+        {
+            return !(lhs == rhs);
+        }
 
         public DateTimeOffset UpdatedTime
         {

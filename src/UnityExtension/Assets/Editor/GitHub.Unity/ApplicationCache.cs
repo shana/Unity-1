@@ -1,13 +1,28 @@
+using GitHub.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Serialization;
 using UnityEditor;
 using UnityEngine;
 using Application = UnityEngine.Application;
 
 namespace GitHub.Unity
 {
+    [Serializable]
+    public class SerializationException : Exception
+    {
+        public SerializationException() : base()
+        { }
+        public SerializationException(string message) : base(message)
+        { }
+        public SerializationException(string message, Exception innerException) : base(message, innerException)
+        { }
+        protected SerializationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        { }
+    }
+
     sealed class ApplicationCache : ScriptObjectSingleton<ApplicationCache>
     {
         [SerializeField] private bool firstRun = true;
@@ -127,7 +142,7 @@ namespace GitHub.Unity
         protected ManagedCacheBase(bool invalidOnFirstRun)
         {
             this.invalidOnFirstRun = invalidOnFirstRun;
-            Logger = Logging.GetLogger(GetType());
+            Logger = LogHelper.GetLogger(GetType());
         }
 
         public void ValidateData()
@@ -373,7 +388,7 @@ namespace GitHub.Unity
 
             if (keys.Length != subKeys.Length || subKeys.Length != subKeyValues.Length)
             {
-                throw new Exception("Deserialization length mismatch");
+                throw new SerializationException("Deserialization length mismatch");
             }
 
             for (var remoteIndex = 0; remoteIndex < keys.Length; remoteIndex++)
@@ -385,7 +400,7 @@ namespace GitHub.Unity
 
                 if (subKeyContainer.Values.Length != subKeyValueContainer.Values.Length)
                 {
-                    throw new Exception("Deserialization length mismatch");
+                    throw new SerializationException("Deserialization length mismatch");
                 }
 
                 var branchesDictionary = new Dictionary<string, ConfigBranch>();

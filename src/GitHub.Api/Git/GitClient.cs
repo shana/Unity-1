@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GitHub.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -8,7 +9,6 @@ namespace GitHub.Unity
 {
     public interface IGitClient
     {
-        Task<NPath> FindGitInstallation();
         ITask<ValidateGitInstallResult> ValidateGitInstall(NPath path);
 
         ITask Init(IOutputProcessor<string> processor = null);
@@ -96,84 +96,13 @@ namespace GitHub.Unity
         private const string UserEmailConfigKey = "user.email";
         private readonly IEnvironment environment;
         private readonly IProcessManager processManager;
-        private readonly ITaskManager taskManager;
         private readonly CancellationToken cancellationToken;
 
-        public GitClient(IEnvironment environment, IProcessManager processManager, ITaskManager taskManager)
+        public GitClient(IEnvironment environment, IProcessManager processManager, CancellationToken cancellationToken)
         {
             this.environment = environment;
             this.processManager = processManager;
-            this.taskManager = taskManager;
-            this.cancellationToken = taskManager.Token;
-        }
-
-        public async Task<NPath> FindGitInstallation()
-        {
-            if (!String.IsNullOrEmpty(environment.GitExecutablePath))
-                return environment.GitExecutablePath;
-
-            NPath path = null;
-
-            if (environment.IsWindows)
-                path = await LookForPortableGit();
-
-            if (path == null)
-                path = await LookForSystemGit();
-
-            if (path == null)
-            {
-                Logger.Trace("Git Installation not discovered");
-            }
-            else
-            {
-                Logger.Trace("Git Installation discovered: '{0}'", path);
-            }
-
-            return path;
-        }
-
-        private Task<NPath> LookForPortableGit()
-        {
-            Logger.Trace("LookForPortableGit");
-
-            var gitHubLocalAppDataPath = environment.UserCachePath;
-            if (!gitHubLocalAppDataPath.DirectoryExists())
-                return null;
-
-            var searchPath = "PortableGit_";
-
-            var portableGitPath = gitHubLocalAppDataPath.Directories()
-                .Where(s => s.FileName.StartsWith(searchPath, StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault();
-
-            if (portableGitPath != null)
-            {
-                portableGitPath = portableGitPath.Combine("cmd", $"git{environment.ExecutableExtension}");
-            }
-
-            return TaskEx.FromResult(portableGitPath);
-        }
-
-        private async Task<NPath> LookForSystemGit()
-        {
-            Logger.Trace("LookForSystemGit");
-
-            NPath path = null;
-            if (!environment.IsWindows)
-            {
-                var p = new NPath("/usr/local/bin/git");
-
-                if (p.FileExists())
-                    path = p;
-            }
-
-            if (path == null)
-            {
-                path = await new FindExecTask("git", taskManager.Token)
-                    .Configure(processManager).StartAwait();
-            }
-
-            return path;
+            this.cancellationToken = cancellationToken;
         }
 
         public ITask<ValidateGitInstallResult> ValidateGitInstall(NPath path)
@@ -473,7 +402,7 @@ namespace GitHub.Unity
                 .Configure(processManager);
         }
 
-        protected static ILogging Logger { get; } = Logging.GetLogger<GitClient>();
+        protected static ILogging Logger { get; } = LogHelper.GetLogger<GitClient>();
     }
 
     public struct GitUser
@@ -490,6 +419,48 @@ namespace GitHub.Unity
         {
             this.name = name;
             this.email = email;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            hash = hash * 23 + (name?.GetHashCode() ?? 0);
+            hash = hash * 23 + (email?.GetHashCode() ?? 0);
+            return hash;
+        }
+
+        public override bool Equals(object other)
+        {
+            if (other is GitUser)
+                return Equals((GitUser)other);
+            return false;
+        }
+
+        public bool Equals(GitUser other)
+        {
+            return
+                String.Equals(name, other.name) &&
+                String.Equals(email, other.email)
+                ;
+        }
+
+        public static bool operator ==(GitUser lhs, GitUser rhs)
+        {
+            // If both are null, or both are same instance, return true.
+            if (ReferenceEquals(lhs, rhs))
+                return true;
+
+            // If one is null, but not both, return false.
+            if (((object)lhs == null) || ((object)rhs == null))
+                return false;
+
+            // Return true if the fields match:
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(GitUser lhs, GitUser rhs)
+        {
+            return !(lhs == rhs);
         }
 
         public override string ToString()
