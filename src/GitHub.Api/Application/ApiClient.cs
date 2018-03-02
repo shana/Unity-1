@@ -383,7 +383,7 @@ namespace GitHub.Unity
 
     public class GitHubApi : IGitHubApi
     {
-        private static ILogging Logger = Logging.GetLogger<GitHubApi>();
+        private static ILogging Logger = LogHelper.GetLogger<GitHubApi>();
         private IRepository Repository { get; set; }
 
         private CacheUpdateEvent lastCurrentRemoteChangedEvent;
