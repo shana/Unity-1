@@ -40,7 +40,7 @@ namespace GitHub.Unity
         [NonSerialized] private Object lastActivatedObject;
 
         [SerializeField] public ChangesTreeNodeDictionary assets = new ChangesTreeNodeDictionary();
-        [SerializeField] public ChangesTreeNodeDictionary folders = new ChangesTreeNodeDictionary() {Name = "folders"};
+        [SerializeField] public ChangesTreeNodeDictionary folders = new ChangesTreeNodeDictionary();
         [SerializeField] public ChangesTreeNodeDictionary checkedFileNodes = new ChangesTreeNodeDictionary();
         [SerializeField] public string title = string.Empty;
         [SerializeField] public string pathSeparator = "/";
@@ -50,6 +50,12 @@ namespace GitHub.Unity
         [SerializeField] public bool isUsingGlobalSelection = false;
         [SerializeField] private List<ChangesTreeNode> nodes = new List<ChangesTreeNode>();
         [SerializeField] private ChangesTreeNode selectedNode = null;
+        [SerializeField] private string name;
+
+        public ChangesTree()
+        {
+            Logger.Debug("ChangesTree constructor");
+        }
 
         public override string Title
         {
@@ -132,6 +138,16 @@ namespace GitHub.Unity
         {
             get { return viewHasFocus; }
             set { viewHasFocus = value; }
+        }
+
+        public string Name
+        {
+            get { return name; }
+            set
+            {
+                name = value;
+                checkedFileNodes.Name = value;
+            }
         }
 
         public void UpdateIcons(Texture2D folderIcon)
@@ -253,11 +269,13 @@ namespace GitHub.Unity
 
         protected override void RemoveCheckedNode(ChangesTreeNode node)
         {
+            Logger.Trace("RemoveCheckedNode: {0}", ((ITreeNode)node).Path);
             checkedFileNodes.Remove(((ITreeNode)node).Path);
         }
 
         protected override void AddCheckedNode(ChangesTreeNode node)
         {
+            Logger.Trace("AddCheckedNode: {0}", ((ITreeNode)node).Path);
             checkedFileNodes.Add(((ITreeNode)node).Path, node);
         }
 
