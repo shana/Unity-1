@@ -40,7 +40,7 @@ namespace GitHub.Unity
         [NonSerialized] private Object lastActivatedObject;
 
         [SerializeField] public ChangesTreeNodeDictionary assets = new ChangesTreeNodeDictionary();
-        [SerializeField] public ChangesTreeNodeDictionary folders = new ChangesTreeNodeDictionary();
+        [SerializeField] public ChangesTreeNodeDictionary folders = new ChangesTreeNodeDictionary() {Name = "folders"};
         [SerializeField] public ChangesTreeNodeDictionary checkedFileNodes = new ChangesTreeNodeDictionary();
         [SerializeField] public string title = string.Empty;
         [SerializeField] public string pathSeparator = "/";

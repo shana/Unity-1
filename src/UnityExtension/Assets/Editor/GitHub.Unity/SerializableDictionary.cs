@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using GitHub.Logging;
 using UnityEngine;
 
 namespace GitHub.Unity
@@ -12,10 +13,17 @@ namespace GitHub.Unity
     {
         [SerializeField] private List<TKey> keys = new List<TKey>();
         [SerializeField] private List<TValue> values = new List<TValue>();
+        [SerializeField] public string Name;
+        [SerializeField] public string id = Guid.NewGuid().ToString();
 
         // save the dictionary to lists
         public void OnBeforeSerialize()
         {
+            if (Name == "folders")
+            {
+                LogHelper.Debug("OnBeforeDeserialize: {0}", id);
+            }
+
             keys.Clear();
             values.Clear();
             foreach (var pair in this)
@@ -28,6 +36,11 @@ namespace GitHub.Unity
         // load dictionary from lists
         public void OnAfterDeserialize()
         {
+            if (Name == "folders")
+            {
+                LogHelper.Debug("OnAfterDeserialize: {0}", id);
+            }
+
             Clear();
 
             if (keys.Count != values.Count)
