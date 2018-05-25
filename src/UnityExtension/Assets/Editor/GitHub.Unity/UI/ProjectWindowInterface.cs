@@ -22,7 +22,13 @@ namespace GitHub.Unity
         private static ILogging Logger { get { return logger = logger ?? LogHelper.GetLogger<ProjectWindowInterface>(); } }
         private static CacheUpdateEvent lastRepositoryStatusChangedEvent;
         private static CacheUpdateEvent lastLocksChangedEvent;
-        private static IRepository Repository { get { return manager.Environment.Repository; } }
+        private static IRepository Repository
+        {
+            get
+            {
+                return manager.Environment != null ? manager.Environment.Repository : null;
+            }
+        }
 
         public static void Initialize(IApplicationManager theManager)
         {
