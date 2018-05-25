@@ -394,6 +394,17 @@ namespace GitHub.Unity
                     if (siblingsInSameState)
                     {
                         parentNode.CheckState = isChecked ? CheckState.Checked : CheckState.Empty;
+                        if (!parentNode.IsFolder)
+                        {
+                            if (isChecked)
+                            {
+                                AddCheckedNode(parentNode);
+                            }
+                            else
+                            {
+                                RemoveCheckedNode(parentNode);
+                            }
+                        }
                     }
                     else
                     {
