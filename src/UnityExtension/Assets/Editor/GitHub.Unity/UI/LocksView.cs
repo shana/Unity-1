@@ -70,7 +70,7 @@ namespace GitHub.Unity
             }
             set
             {
-                selectedEntry = value;
+//                selectedEntry = value;
 
 //                var activeObject = selectedEntry != null && selectedEntry.GitLock != GitLock.Default && projectPath.IsInitialized
 //                    ? AssetDatabase.LoadMainAssetAtPath(selectedEntry.GitLock.Path.MakeAbsolute().RelativeTo(projectPath))
