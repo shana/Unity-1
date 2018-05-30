@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GitHub.Logging;
 using UnityEditor;
 using UnityEngine;
 
@@ -135,28 +136,33 @@ namespace GitHub.Unity
 
         private Rect RenderEntry(Rect entryRect, GitLockEntry entry)
         {
-            var isSelected = entry == SelectedEntry;
-            var iconWidth = 32;
-            var iconHeight = 32;
-            var iconBadgeWidth = 16;
-            var iconBadgeHeight = 16;
-            var hasKeyboardFocus = GUIUtility.keyboardControl == controlId;
+//            var isSelected = entry == SelectedEntry;
+//            var iconWidth = 32;
+//            var iconHeight = 32;
+//            var iconBadgeWidth = 16;
+//            var iconBadgeHeight = 16;
+//            var hasKeyboardFocus = GUIUtility.keyboardControl == controlId;
 
-            GUILayout.BeginHorizontal(isSelected ? Styles.SelectedArea : Styles.Label);
-            GUILayout.Label(entry.Icon, GUILayout.Height(iconWidth), GUILayout.Width(iconHeight));
-            if (Event.current.type == EventType.Repaint)
+            GUILayout.BeginHorizontal();
+//            GUILayout.BeginHorizontal(isSelected ? Styles.SelectedArea : Styles.Label);
             {
-                var iconRect = GUILayoutUtility.GetLastRect();
-                var iconBadgeRect = new Rect(iconRect.x + iconBadgeWidth, iconRect.y + iconBadgeHeight, iconBadgeWidth, iconBadgeHeight);
-                Styles.Label.Draw(iconBadgeRect, entry.IconBadge, false, false, false, hasKeyboardFocus);
+//                GUILayout.Label(entry.Icon, GUILayout.Height(iconWidth), GUILayout.Width(iconHeight));
+//                if (Event.current.type == EventType.Repaint)
+//                {
+//                    var iconRect = GUILayoutUtility.GetLastRect();
+//                    var iconBadgeRect = new Rect(iconRect.x + iconBadgeWidth, iconRect.y + iconBadgeHeight, iconBadgeWidth, iconBadgeHeight);
+//                    Styles.Label.Draw(iconBadgeRect, entry.IconBadge, false, false, false, hasKeyboardFocus);
+//                }
+//
+//                GUILayout.BeginVertical();
+//                {
+//                    GUILayout.Label(entry.GitLock.Path, isSelected ? Styles.SelectedLabel : Styles.Label);
+//                    GUILayout.Label(string.Format("Locked {0} by {1}", entry.LockedAt, entry.GitLock.Owner.Name), isSelected ? Styles.LocksViewLockedBySelectedStyle : Styles.LocksViewLockedByStyle);
+//                }
+//                GUILayout.EndVertical();
             }
-            GUILayout.BeginVertical();
-            GUILayout.Label(entry.GitLock.Path, isSelected ? Styles.SelectedLabel : Styles.Label);
-            GUILayout.Label(string.Format("Locked {0} by {1}", entry.LockedAt, entry.GitLock.Owner.Name), isSelected ? Styles.LocksViewLockedBySelectedStyle : Styles.LocksViewLockedByStyle);
-            GUILayout.EndVertical();
             GUILayout.EndHorizontal();
-            var itemRect = GUILayoutUtility.GetLastRect();
-            return itemRect;
+            return GUILayoutUtility.GetLastRect();
         }
 
         private bool HandleInput(Rect rect, GitLockEntry entry, int index, Action<GitLock> singleClick = null,
@@ -590,7 +596,7 @@ namespace GitHub.Unity
 
             if (currentLocksHasUpdate)
             {
-                lockedFiles = Repository.CurrentLocks;
+                lockedFiles = Repository.CurrentLocks.ToList();
             }
 
             if (currentStatusEntriesHasUpdate)
@@ -616,6 +622,7 @@ namespace GitHub.Unity
             locksControl.projectPath = Environment.UnityProjectPath;
             locksControl.Load(lockedFiles, gitStatusEntries);
         }
+
         public override void OnSelectionChange()
         {
             base.OnSelectionChange();
