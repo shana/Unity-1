@@ -72,16 +72,16 @@ namespace GitHub.Unity
             {
                 selectedEntry = value;
 
-                var activeObject = selectedEntry != null && selectedEntry.GitLock != GitLock.Default && projectPath.IsInitialized
-                    ? AssetDatabase.LoadMainAssetAtPath(selectedEntry.GitLock.Path.MakeAbsolute().RelativeTo(projectPath))
-                    : null;
-
-                lastActivatedObject = activeObject;
-
-                if (LocksControlHasFocus)
-                {
-                    Selection.activeObject = activeObject;
-                }
+//                var activeObject = selectedEntry != null && selectedEntry.GitLock != GitLock.Default && projectPath.IsInitialized
+//                    ? AssetDatabase.LoadMainAssetAtPath(selectedEntry.GitLock.Path.MakeAbsolute().RelativeTo(projectPath))
+//                    : null;
+//
+//                lastActivatedObject = activeObject;
+//
+//                if (LocksControlHasFocus)
+//                {
+//                    Selection.activeObject = activeObject;
+//                }
             }
         }
 
@@ -361,18 +361,18 @@ namespace GitHub.Unity
 
         public bool OnSelectionChange()
         {
-            if (!LocksControlHasFocus)
-            {
-                GitLockEntry gitLockEntry = GitLockEntry.Default;
-                if (Selection.activeObject != lastActivatedObject)
-                {
-                    var activeAssetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
-                    var activeAssetGuid = AssetDatabase.AssetPathToGUID(activeAssetPath);
-                    assets.TryGetValue(activeAssetGuid, out gitLockEntry);
-                }
-                SelectedEntry = gitLockEntry;
-                return true;
-            }
+//            if (!LocksControlHasFocus)
+//            {
+//                GitLockEntry gitLockEntry = GitLockEntry.Default;
+//                if (Selection.activeObject != lastActivatedObject)
+//                {
+//                    var activeAssetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
+//                    var activeAssetGuid = AssetDatabase.AssetPathToGUID(activeAssetPath);
+//                    assets.TryGetValue(activeAssetGuid, out gitLockEntry);
+//                }
+//                SelectedEntry = gitLockEntry;
+//                return true;
+//            }
             return false;
         }
     }
