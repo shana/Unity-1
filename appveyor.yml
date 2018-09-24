@@ -50,7 +50,7 @@ test:
 after_build:
 - ps: |
     $sourcedir="$($env:appveyor_build_folder)\unity\PackageProject"
-    Get-ChildItem -Recurse $($sourcedir)\*.pdb | % { $env:appveyor_build_folder\lib\pdb2mdb.exe $_.FullName }
+    Get-ChildItem -Recurse $($sourcedir)\*.pdb | foreach { $_.fullname.substring(0, $_.fullname.length - $_.extension.length) } | foreach { & 'lib\pdb2mdb.exe' "$($_).dll" }
 
     $packagefile="github-for-unity-build-$($env:appveyor_build_number).zip"
     7z a $packagefile sourcedir
