@@ -1,0 +1,11 @@
+{
+  "name": "github-for-unity",
+  "version": "1.2.1",
+  "description": "The GitHub for Unity extension brings Git and GitHub into Unity, integrating source control into your work with friendly and accessible tools and workflows.",
+  "repository": "https://github.com/github-for-unity/Unity",
+  "license": "MIT",
+  "devDependencies": {
+    "conventional-changelog-cli": "^2.0.11",
+    "standard-version": "^4.4.0"
+  }
+}
