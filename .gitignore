@@ -9,3 +9,4 @@ build/
 TestResult.xml
 *.stackdump
 *.lastcodeanalysissucceeded
+node_modules
